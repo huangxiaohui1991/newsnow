@@ -2,7 +2,18 @@ name = "newsnow"
 pages_build_output_dir = "dist/output/public"
 compatibility_date = "2024-10-03"
 
+# D1 数据库配置
 [[d1_databases]]
 binding = "NEWSNOW_DB"
 database_name = "newsnow-db"
 database_id = "b09c579a-42d6-4e08-b4cf-fc9cc7c0c213"
+
+# 环境变量配置
+[vars]
+INIT_TABLE = "true"
+ENABLE_CACHE = "true"
+
+# Secrets 需要通过 Dashboard 或 CLI 设置
+# G_CLIENT_ID (通过 Dashboard 设置为 Secret)
+# G_CLIENT_SECRET (通过 Dashboard 设置为 Secret)
+# JWT_SECRET (通过 Dashboard 设置为 Secret)
