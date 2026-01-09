@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ColumnRouteImport } from './routes/$column'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CColumnRouteImport } from './routes/c.$column'
 
 const ColumnRoute = ColumnRouteImport.update({
   id: '/$column',
@@ -23,40 +22,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CColumnRoute = CColumnRouteImport.update({
-  id: '/c/$column',
-  path: '/c/$column',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$column': typeof ColumnRoute
-  '/c/$column': typeof CColumnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$column': typeof ColumnRoute
-  '/c/$column': typeof CColumnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$column': typeof ColumnRoute
-  '/c/$column': typeof CColumnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$column' | '/c/$column'
+  fullPaths: '/' | '/$column'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$column' | '/c/$column'
-  id: '__root__' | '/' | '/$column' | '/c/$column'
+  to: '/' | '/$column'
+  id: '__root__' | '/' | '/$column'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ColumnRoute: typeof ColumnRoute
-  CColumnRoute: typeof CColumnRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,20 +65,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/c/$column': {
-      id: '/c/$column'
-      path: '/c/$column'
-      fullPath: '/c/$column'
-      preLoaderRoute: typeof CColumnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ColumnRoute: ColumnRoute,
-  CColumnRoute: CColumnRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
