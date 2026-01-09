@@ -23,7 +23,6 @@ const ALLOWED_DOMAINS = [
   "toutiao.com",
   "sohu.com",
   "ifeng.com",
-  "wallstreetcn.com",
   "gov.cn",
   "news.cn",
 ]
@@ -82,6 +81,11 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 403,
       statusMessage: "URL is not allowed",
+      data: {
+        url,
+        hint: "This domain is not in the allowed whitelist. Note that Single Page Applications (SPAs) that require JavaScript to render content are not supported.",
+        allowedDomains: ALLOWED_DOMAINS.slice(0, 5).concat("..."), // Show first 5 domains
+      },
     })
   }
 
@@ -165,10 +169,18 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: any) {
     console.error(`[ZenReader] Failed to read ${url}:`, error)
+
+    // Provide more detailed error information for debugging
+    const errorMessage = error.message || String(error)
+
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to extract content",
-      data: error.message,
+      data: {
+        url,
+        error: errorMessage,
+        hint: "This page might have anti-scraping protection or use a complex HTML structure that Readability cannot parse.",
+      },
     })
   }
 })
