@@ -13,6 +13,7 @@ import { SearchBar } from "~/components/common/search-bar"
 import { FloatingNav } from "~/components/layout/floating-nav"
 import { ZenModeOverlay } from "~/components/dashboard/zen-mode-overlay"
 import { ReadingOverlay } from "~/components/dashboard/reading-overlay"
+import { LoginOverlay } from "~/components/dashboard/login-overlay"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -45,26 +46,39 @@ function RootComponent() {
 
   return (
     <>
+      {/* Immersive Ambilight Background */}
+      <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-[#020203]">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] rounded-full bg-purple-500/10 blur-[120px] animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-[20%] right-[15%] w-[30%] h-[30%] rounded-full bg-orange-500/5 blur-[120px] animate-pulse" style={{ animationDelay: "4s" }} />
+      </div>
+
       <GlobalOverlayScrollbar
         className={$([
           !isMobile && "px-4",
-          "h-full overflow-x-auto",
+          "h-full overflow-x-auto relative",
           "md:(px-10)",
           "lg:(px-24)",
         ])}
       >
-        <header
-          className={$([
-            "grid items-center py-4 px-4 sm:px-6",
-            "lg:(py-6 px-8)",
-            "sticky top-0 z-40 backdrop-blur-md bg-white/50 dark:bg-black/50 border-b border-neutral-200/50 dark:border-white/5",
-          ])}
-          style={{
-            gridTemplateColumns: "1fr auto 1fr",
-          }}
-        >
-          <Header />
-        </header>
+        {/* Cyber-style Sticky Header */}
+        <div className="sticky top-4 z-50 mb-6 p-[1px] rounded-[1.5rem] group/header transition-all duration-500 shadow-2xl">
+          {/* Light Strip Border */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-orange-500 opacity-20 group-hover/header:opacity-100 rounded-[1.5rem] transition-opacity duration-700" />
+
+          <header
+            className={$([
+              "relative grid items-center py-3 px-4 sm:px-6",
+              "bg-[#0a0a0b]/80 dark:bg-black/90 backdrop-blur-2xl rounded-[calc(1.5rem-1px)]",
+            ])}
+            style={{
+              gridTemplateColumns: "1fr auto 1fr",
+            }}
+          >
+            <Header />
+          </header>
+        </div>
+
         <main className={$([
           "mt-2",
           "min-h-[calc(100vh-180px)]",
@@ -77,6 +91,7 @@ function RootComponent() {
         <FloatingNav />
         <ZenModeOverlay />
         <ReadingOverlay />
+        <LoginOverlay />
         <footer className="py-6 flex flex-col items-center justify-center text-sm text-neutral-500 font-mono">
           <Footer />
         </footer>

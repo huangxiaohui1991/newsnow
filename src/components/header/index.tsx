@@ -16,12 +16,6 @@ function GoTop() {
   )
 }
 
-function Github() {
-  return (
-    <button type="button" title="Github" className="i-ph:github-logo-duotone btn" onClick={() => window.open(Homepage)} />
-  )
-}
-
 function Refresh() {
   const currentSources = useAtomValue(currentSourcesAtom)
   const { refresh } = useRefetch()
@@ -48,19 +42,18 @@ export function Header() {
   return (
     <>
       <span className="flex justify-self-start items-center">
-        <Link to="/" className="flex gap-1.5 sm:gap-2 items-center">
-          <div className="h-8 w-8 sm:h-10 sm:w-10 bg-cover" title="logo" style={{ backgroundImage: "url(/icon.svg)" }} />
-          <span className="text-lg sm:text-2xl font-brand line-height-none!">
-            <p>News</p>
-            <p className="mt--1">
-              <span className="color-primary-6">N</span>
-              <span>ow</span>
-            </p>
-          </span>
+        <Link to="/" className="flex gap-2 sm:gap-3 items-center group/logo">
+          {/* Cyber Icon */}
+          <div className="h-8 w-8 sm:h-9 sm:w-9 bg-cover transition-transform duration-500 group-hover/logo:rotate-12" title="logo" style={{ backgroundImage: "url(/icon.svg)" }} />
+
+          <div className="flex items-center">
+            <span className="text-xl sm:text-2xl font-black tracking-tighter leading-none flex items-center">
+              <span className="text-white dark:text-white opacity-90">News</span>
+              <span className="text-cyan-400">N</span>
+              <span className="text-neutral-500 dark:text-neutral-400">ow</span>
+            </span>
+          </div>
         </Link>
-        <a target="_blank" href={`${Homepage}/releases/tag/v${Version}`} className="btn text-[10px] sm:text-sm ml-1 font-mono opacity-50">
-          {`v${Version}`}
-        </a>
       </span>
       <span className="justify-self-center block sm:hidden">
         {/* Navigation is consolidated in the bottom Floating Nav */}
@@ -68,9 +61,6 @@ export function Header() {
       <span className="justify-self-end flex gap-1.5 sm:gap-2 items-center text-lg sm:text-xl text-primary-600 dark:text-primary">
         <GoTop />
         <Refresh />
-        <span className="hidden sm:block">
-          <Github />
-        </span>
         <Menu />
       </span>
     </>
