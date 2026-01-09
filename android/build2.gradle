@@ -1,0 +1,10 @@
+        // 在 app/build.gradle.kts (KTS) 或 app/build.gradle (Groovy) 中
+        android {
+            // ...
+            packagingOptions {
+                // 语法是 '路径/文件名'
+                exclude("res/drawable/colliding_resource.png")
+                exclude("res/layout/colliding_layout.xml")
+            }
+        }
+        

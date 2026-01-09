@@ -1,5 +1,6 @@
 import type { MaybePromise } from "@shared/type.util"
 import { $fetch } from "ofetch"
+import { Capacitor } from "@capacitor/core"
 
 export function safeParseString(str: any) {
   try {
@@ -37,10 +38,14 @@ export class Timer {
   }
 }
 
+// 在 Capacitor (Android/iOS) 环境下使用远程 API，否则使用相对路径
+const isNative = Capacitor.isNativePlatform()
+const apiBaseURL = isNative ? "https://news.hxh.world/api" : "/api"
+
 export const myFetch = $fetch.create({
   timeout: 15000,
   retry: 0,
-  baseURL: "/api",
+  baseURL: apiBaseURL,
 })
 
 export function isiOS() {
