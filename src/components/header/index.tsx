@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { useIsFetching } from "@tanstack/react-query"
 import type { SourceID } from "@shared/types"
-import { NavBar } from "../navbar"
 import { Menu } from "./menu"
 import { currentSourcesAtom, goToTopAtom } from "~/atoms"
 
@@ -48,10 +47,10 @@ function Refresh() {
 export function Header() {
   return (
     <>
-      <span className="flex justify-self-start">
-        <Link to="/" className="flex gap-2 items-center">
-          <div className="h-10 w-10 bg-cover" title="logo" style={{ backgroundImage: "url(/icon.svg)" }} />
-          <span className="text-2xl font-brand line-height-none!">
+      <span className="flex justify-self-start items-center">
+        <Link to="/" className="flex gap-1.5 sm:gap-2 items-center">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 bg-cover" title="logo" style={{ backgroundImage: "url(/icon.svg)" }} />
+          <span className="text-lg sm:text-2xl font-brand line-height-none!">
             <p>News</p>
             <p className="mt--1">
               <span className="color-primary-6">N</span>
@@ -59,19 +58,19 @@ export function Header() {
             </p>
           </span>
         </Link>
-        <a target="_blank" href={`${Homepage}/releases/tag/v${Version}`} className="btn text-sm ml-1 font-mono">
+        <a target="_blank" href={`${Homepage}/releases/tag/v${Version}`} className="btn text-[10px] sm:text-sm ml-1 font-mono opacity-50">
           {`v${Version}`}
         </a>
       </span>
-      <span className="justify-self-center">
-        <span className="hidden md:(inline-block)">
-          <NavBar />
-        </span>
+      <span className="justify-self-center block sm:hidden">
+        {/* Navigation is consolidated in the bottom Floating Nav */}
       </span>
-      <span className="justify-self-end flex gap-2 items-center text-xl text-primary-600 dark:text-primary">
+      <span className="justify-self-end flex gap-1.5 sm:gap-2 items-center text-lg sm:text-xl text-primary-600 dark:text-primary">
         <GoTop />
         <Refresh />
-        <Github />
+        <span className="hidden sm:block">
+          <Github />
+        </span>
         <Menu />
       </span>
     </>
