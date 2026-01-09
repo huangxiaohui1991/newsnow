@@ -3,6 +3,7 @@
  * Aggregates cross-platform hot topics
  */
 
+import process from "node:process"
 import type { NewsItem, SourceID } from "@shared/types"
 import { sources } from "@shared/sources"
 import { getters } from "../getters"
@@ -45,12 +46,21 @@ const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
  */
 function getHotListSources(): SourceID[] {
   const hotSources: SourceID[] = []
+  const isCF = !!process.env.CF_PAGES
 
   Object.entries(sources).forEach(([id, config]) => {
+    // Skip disabled sources
+    if (config.disable === true || (isCF && config.disable === "cf")) {
+      return
+    }
+    // Skip redirect sources
+    if ((config as any).redirect) {
+      return
+    }
     // Include sources marked as "hottest" type
-    if (config.type === "hottest" && !(config as any).redirect) {
+    if (config.type === "hottest") {
       hotSources.push(id as SourceID)
-    } else if (id === "weibo" && !(config as any).redirect) {
+    } else if (id === "weibo") {
       // Include weibo as it's always a hot source
       hotSources.push(id as SourceID)
     }
@@ -69,13 +79,20 @@ async function fetchMultipleSources(sourceIds: SourceID[]): Promise<Array<{
   const results = await Promise.allSettled(
     sourceIds.map(async (id) => {
       try {
+        if (typeof getters[id] !== "function") {
+          console.warn(`[Spotlight] Getter not found for ${id}`)
+          return {
+            sourceId: id,
+            items: [],
+          }
+        }
         const items = await getters[id]()
         return {
           sourceId: id,
-          items,
+          items: items || [],
         }
       } catch (error) {
-        console.error(`Failed to fetch ${id}:`, error)
+        console.error(`[Spotlight] Failed to fetch ${id}:`, error)
         return {
           sourceId: id,
           items: [],
@@ -88,6 +105,7 @@ async function fetchMultipleSources(sourceIds: SourceID[]): Promise<Array<{
     if (result.status === "fulfilled") {
       return result.value
     }
+    console.error(`[Spotlight] Promise rejected for ${sourceIds[index]}:`, result.reason)
     return {
       sourceId: sourceIds[index],
       items: [],

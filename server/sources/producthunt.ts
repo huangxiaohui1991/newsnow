@@ -3,10 +3,11 @@ import type { NewsItem } from "@shared/types"
 
 export default defineSource(async () => {
   const apiToken = process.env.PRODUCTHUNT_API_TOKEN
-  const token = `Bearer ${apiToken}`
   if (!apiToken) {
-    throw new Error("PRODUCTHUNT_API_TOKEN is not set")
+    console.warn("[ProductHunt] PRODUCTHUNT_API_TOKEN is not set, skipping")
+    return []
   }
+  const token = `Bearer ${apiToken}`
   const query = `
     query {
       posts(first: 30, order: VOTES) {

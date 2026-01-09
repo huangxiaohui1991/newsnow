@@ -18,7 +18,8 @@ export default defineEventHandler(async (event) => {
 
     return data
   } catch (error: any) {
-    console.error("Live Feed API error:", error)
+    console.error("[LiveFeed API] Error:", error?.message || error)
+    console.error("[LiveFeed API] Stack:", error?.stack)
     throw createError({
       statusCode: 500,
       message: error.message || "Failed to fetch live feed",

@@ -14,7 +14,8 @@ export default defineEventHandler(async (event) => {
 
     return data
   } catch (error: any) {
-    console.error("Spotlight API error:", error)
+    console.error("[Spotlight API] Error:", error?.message || error)
+    console.error("[Spotlight API] Stack:", error?.stack)
     throw createError({
       statusCode: 500,
       message: error.message || "Failed to fetch spotlight topics",

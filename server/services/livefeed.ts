@@ -3,6 +3,7 @@
  * Aggregates real-time news from all realtime sources
  */
 
+import process from "node:process"
 import type { SourceID } from "@shared/types"
 import { sources } from "@shared/sources"
 import { getters } from "../getters"
@@ -30,10 +31,19 @@ export interface LiveFeedResponse {
 // Get all realtime sources
 function getRealtimeSources(): SourceID[] {
   const realtimeSources: SourceID[] = []
+  const isCF = !!process.env.CF_PAGES
 
   Object.entries(sources).forEach(([id, config]) => {
-    // Include sources marked as "realtime" type, but skip if it's a redirect source
-    if (config.type === "realtime" && !(config as any).redirect) {
+    // Skip disabled sources
+    if (config.disable === true || (isCF && config.disable === "cf")) {
+      return
+    }
+    // Skip redirect sources
+    if ((config as any).redirect) {
+      return
+    }
+    // Include sources marked as "realtime" type
+    if (config.type === "realtime") {
       realtimeSources.push(id as SourceID)
     }
   })
@@ -83,14 +93,20 @@ export async function getLiveFeed(options: {
   const sourceData = await Promise.allSettled(
     sourceIds.map(async (id) => {
       try {
-        if (typeof getters[id] !== "function") throw new Error(`Getter not found for ${id}`)
+        if (typeof getters[id] !== "function") {
+          console.warn(`[LiveFeed] Getter not found for ${id}`)
+          return {
+            sourceId: id,
+            items: [],
+          }
+        }
         const items = await getters[id]()
         return {
           sourceId: id,
-          items,
+          items: items || [],
         }
       } catch (error) {
-        console.error(`Failed to fetch ${id}:`, error)
+        console.error(`[LiveFeed] Failed to fetch ${id}:`, error)
         return {
           sourceId: id,
           items: [],
