@@ -5,10 +5,20 @@
 
 /**
  * Platform detection flags
+ * Multiple methods to detect Cloudflare Workers environment
  */
-export const isCloudflare = typeof caches !== "undefined" && typeof (caches as any).default !== "undefined"
+/* eslint-disable node/prefer-global/process */
+export const isCloudflare = !!(
+  // Check for CF_PAGES environment variable (set during Cloudflare Pages build/runtime)
+  (typeof process !== "undefined" && process.env?.CF_PAGES)
+  // Check for Cloudflare-specific caches API
+  || (typeof caches !== "undefined" && typeof (caches as any).default !== "undefined")
+  // Check for navigator.userAgent containing "Cloudflare-Workers"
+  || (typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers")
+)
+/* eslint-enable node/prefer-global/process */
 // eslint-disable-next-line node/prefer-global/process
-export const isNode = typeof process !== "undefined" && process.versions && process.versions.node !== undefined
+export const isNode = typeof process !== "undefined" && process.versions && process.versions.node !== undefined && !isCloudflare
 export const isDeno = typeof Deno !== "undefined"
 export const isBun = typeof Bun !== "undefined"
 

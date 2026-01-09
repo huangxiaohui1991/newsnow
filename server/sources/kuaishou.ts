@@ -1,3 +1,5 @@
+import { isCloudflare } from "#/utils/platform"
+
 interface KuaishouRes {
   defaultClient: {
     ROOT_QUERY: {
@@ -25,6 +27,12 @@ interface HotRankData {
 }
 
 export default defineSource(async () => {
+  // Skip in Cloudflare environment
+  if (isCloudflare) {
+    console.log("[Kuaishou] Skipping in Cloudflare environment")
+    return []
+  }
+
   // 获取快手首页HTML
   const html = await myFetch("https://www.kuaishou.com/?isHome=1")
   // 提取window.__APOLLO_STATE__中的数据

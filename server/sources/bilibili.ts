@@ -1,3 +1,5 @@
+import { isCloudflare } from "#/utils/platform"
+
 interface WapRes {
   code: number
   exp_str: string
@@ -103,6 +105,12 @@ const hotSearch = defineSource(async () => {
 })
 
 const hotVideo = defineSource(async () => {
+  // Skip in Cloudflare environment
+  if (isCloudflare) {
+    console.log("[Bilibili] hotVideo skipping in Cloudflare environment")
+    return []
+  }
+
   const url = "https://api.bilibili.com/x/web-interface/popular"
   const res: HotVideoRes = await myFetch(url)
 
@@ -120,6 +128,12 @@ const hotVideo = defineSource(async () => {
 })
 
 const ranking = defineSource(async () => {
+  // Skip in Cloudflare environment
+  if (isCloudflare) {
+    console.log("[Bilibili] ranking skipping in Cloudflare environment")
+    return []
+  }
+
   const url = "https://api.bilibili.com/x/web-interface/ranking/v2"
   const res: HotVideoRes = await myFetch(url)
 

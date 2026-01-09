@@ -80,13 +80,18 @@ export async function getLiveFeed(options: {
 } = {}): Promise<LiveFeedResponse> {
   const { category = "all", limit = 50 } = options
 
+  console.log(`[LiveFeed Service] isCloudflare: ${isCloudflare}`)
+
   // 1. Get all realtime sources
   const realtimeSourceIds = getRealtimeSources()
+  console.log(`[LiveFeed Service] Realtime sources: ${realtimeSourceIds.join(", ")}`)
 
   // 2. Filter by category if needed
   const sourceIds = category === "all"
     ? realtimeSourceIds
     : realtimeSourceIds.filter(id => getSourceCategory(id) === category)
+
+  console.log(`[LiveFeed Service] Filtered sources for category ${category}: ${sourceIds.join(", ")}`)
 
   // 3. Fetch data from all sources
   const sourceData = await Promise.allSettled(
@@ -99,13 +104,15 @@ export async function getLiveFeed(options: {
             items: [],
           }
         }
+        console.log(`[LiveFeed] Fetching ${id}...`)
         const items = await getters[id]()
+        console.log(`[LiveFeed] ${id} returned ${items?.length || 0} items`)
         return {
           sourceId: id,
           items: items || [],
         }
-      } catch (error) {
-        console.error(`[LiveFeed] Failed to fetch ${id}:`, error)
+      } catch (error: any) {
+        console.error(`[LiveFeed] Failed to fetch ${id}:`, error?.message || error)
         return {
           sourceId: id,
           items: [],

@@ -52,6 +52,8 @@ if (process.env.VERCEL) {
       "canvas": "unenv/mock/proxy",
       "node:canvas": "unenv/mock/proxy",
       "node-canvas": "unenv/mock/proxy",
+      // Mock iconv-lite for Cloudflare Workers
+      "iconv-lite": "unenv/mock/proxy",
     },
   }
   nitroOption.database = {
