@@ -40,7 +40,8 @@
     "column": "world",
     "home": "https://www.zaobao.com",
     "color": "red",
-    "interval": 1800000
+    "interval": 1800000,
+    "disable": "cf"
   },
   "coolapk": {
     "title": "今日最热",

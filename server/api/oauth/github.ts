@@ -1,12 +1,12 @@
-import process from "node:process"
 import { SignJWT } from "jose"
+import { getEnv } from "../../utils/platform"
 import { UserTable } from "#/database/user"
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase()
   const userTable = db ? new UserTable(db) : undefined
   if (!userTable) throw new Error("db is not defined")
-  if (process.env.INIT_TABLE !== "false") await userTable.init()
+  if (getEnv("INIT_TABLE") !== "false") await userTable.init()
 
   const response: {
     access_token: string
@@ -17,8 +17,8 @@ export default defineEventHandler(async (event) => {
     {
       method: "POST",
       body: {
-        client_id: process.env.G_CLIENT_ID,
-        client_secret: process.env.G_CLIENT_SECRET,
+        client_id: getEnv("G_CLIENT_ID"),
+        client_secret: getEnv("G_CLIENT_SECRET"),
         code: getQuery(event).code,
       },
       headers: {
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
   })
     .setExpirationTime("60d")
     .setProtectedHeader({ alg: "HS256" })
-    .sign(new TextEncoder().encode(process.env.JWT_SECRET!))
+    .sign(new TextEncoder().encode(getEnv("JWT_SECRET")!))
 
   // nitro 有 bug，在 cloudflare 里没法 set cookie
   // seconds

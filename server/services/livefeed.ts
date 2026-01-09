@@ -3,10 +3,10 @@
  * Aggregates real-time news from all realtime sources
  */
 
-import process from "node:process"
 import type { SourceID } from "@shared/types"
 import { sources } from "@shared/sources"
 import { getters } from "../getters"
+import { isCloudflare } from "../utils/platform"
 
 export interface LiveFeedItem {
   id: string
@@ -31,11 +31,10 @@ export interface LiveFeedResponse {
 // Get all realtime sources
 function getRealtimeSources(): SourceID[] {
   const realtimeSources: SourceID[] = []
-  const isCF = !!process.env.CF_PAGES
 
   Object.entries(sources).forEach(([id, config]) => {
     // Skip disabled sources
-    if (config.disable === true || (isCF && config.disable === "cf")) {
+    if (config.disable === true || (isCloudflare && config.disable === "cf")) {
       return
     }
     // Skip redirect sources

@@ -3,11 +3,11 @@
  * Aggregates cross-platform hot topics
  */
 
-import process from "node:process"
 import type { NewsItem, SourceID } from "@shared/types"
 import { sources } from "@shared/sources"
 import { getters } from "../getters"
 import { groupByTopic } from "../utils/topic-matcher"
+import { isCloudflare } from "../utils/platform"
 
 export interface SpotlightPlatform {
   sourceId: SourceID
@@ -46,11 +46,10 @@ const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
  */
 function getHotListSources(): SourceID[] {
   const hotSources: SourceID[] = []
-  const isCF = !!process.env.CF_PAGES
 
   Object.entries(sources).forEach(([id, config]) => {
     // Skip disabled sources
-    if (config.disable === true || (isCF && config.disable === "cf")) {
+    if (config.disable === true || (isCloudflare && config.disable === "cf")) {
       return
     }
     // Skip redirect sources

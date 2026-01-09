@@ -47,6 +47,8 @@ export const originSources = {
     column: "world",
     color: "red",
     desc: "来自第三方网站: 早晨报",
+    // iconv-lite may not work in Cloudflare Workers
+    disable: "cf",
     home: "https://www.zaobao.com",
   },
   "coolapk": {

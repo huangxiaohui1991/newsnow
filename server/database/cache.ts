@@ -1,7 +1,7 @@
-import process from "node:process"
 import type { NewsItem } from "@shared/types"
 import type { Database } from "db0"
 import type { CacheInfo, CacheRow } from "../types"
+import { getEnv } from "../utils/platform"
 
 export class Cache {
   private db
@@ -75,9 +75,9 @@ export async function getCacheTable() {
   try {
     const db = useDatabase()
     // logger.info("db: ", db.getInstance())
-    if (process.env.ENABLE_CACHE === "false") return
+    if (getEnv("ENABLE_CACHE") === "false") return
     const cacheTable = new Cache(db)
-    if (process.env.INIT_TABLE !== "false") await cacheTable.init()
+    if (getEnv("INIT_TABLE") !== "false") await cacheTable.init()
     return cacheTable
   } catch (e) {
     logger.error("failed to init database ", e)

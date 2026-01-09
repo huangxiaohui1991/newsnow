@@ -1,7 +1,7 @@
-import process from "node:process"
+import { getEnv } from "../../utils/platform"
 
 export default defineEventHandler(async (event) => {
-  const apiKey = process.env.BIGMODEL_API_KEY
+  const apiKey = getEnv("BIGMODEL_API_KEY")
   if (!apiKey) {
     throw createError({
       statusCode: 500,

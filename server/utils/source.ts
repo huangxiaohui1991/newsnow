@@ -1,6 +1,6 @@
-import process from "node:process"
 import type { AllSourceID } from "@shared/types"
 import defu from "defu"
+import { isCloudflare } from "./platform"
 import type { RSSHubOption, RSSHubInfo as RSSHubResponse, SourceGetter, SourceOption } from "#/types"
 
 type R = Partial<Record<AllSourceID, SourceGetter>>
@@ -47,7 +47,7 @@ export function defineRSSHubSource(route: string, RSSHubOptions?: RSSHubOption, 
 }
 
 export function proxySource(proxyUrl: string, source: SourceGetter) {
-  return process.env.CF_PAGES
+  return isCloudflare
     ? defineSource(async () => {
         const data = await myFetch(proxyUrl)
         return data.items

@@ -1,4 +1,4 @@
-import process from "node:process"
+import { getEnv } from "../../utils/platform"
 import { UserTable } from "#/database/user"
 
 export default defineEventHandler(async (event) => {
@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     const db = useDatabase()
     if (!db) throw new Error("Not found database")
     const userTable = new UserTable(db)
-    if (process.env.INIT_TABLE !== "false") await userTable.init()
+    if (getEnv("INIT_TABLE") !== "false") await userTable.init()
     if (event.method === "GET") {
       const { data, updated } = await userTable.getData(id)
       return {

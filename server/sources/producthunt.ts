@@ -1,8 +1,8 @@
-import process from "node:process"
 import type { NewsItem } from "@shared/types"
+import { getEnv } from "#/utils/platform"
 
 export default defineSource(async () => {
-  const apiToken = process.env.PRODUCTHUNT_API_TOKEN
+  const apiToken = getEnv("PRODUCTHUNT_API_TOKEN")
   if (!apiToken) {
     console.warn("[ProductHunt] PRODUCTHUNT_API_TOKEN is not set, skipping")
     return []
