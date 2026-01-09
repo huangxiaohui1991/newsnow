@@ -104,20 +104,24 @@ export async function getLiveFeed(options: {
     .flatMap((result, index) => {
       if (result.status === "fulfilled") {
         const sourceId = sourceIds[index]
-        return result.value.items.map((item, itemIndex) => ({
-          id: `livefeed-${sourceId}-${item.id || itemIndex}`,
-          sourceId,
-          sourceName: sources[sourceId]?.name || sourceId,
-          sourceColor: sources[sourceId]?.color || "gray",
-          title: item.title,
-          url: item.url,
-          mobileUrl: item.mobileUrl,
-          pubDate: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-          extra: {
-            ...item.extra,
-            info: typeof item.extra?.info === "string" ? item.extra.info : undefined,
-          },
-        }))
+        return result.value.items.map((item, itemIndex) => {
+          // Ensure we always have a valid ID - use itemIndex as fallback if id is empty/undefined
+          const itemId = item.id !== undefined && item.id !== null && item.id !== "" ? item.id : itemIndex
+          return {
+            id: `livefeed-${sourceId}-${itemId}`,
+            sourceId,
+            sourceName: sources[sourceId]?.name || sourceId,
+            sourceColor: sources[sourceId]?.color || "gray",
+            title: item.title,
+            url: item.url,
+            mobileUrl: item.mobileUrl,
+            pubDate: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+            extra: {
+              ...item.extra,
+              info: typeof item.extra?.info === "string" ? item.extra.info : undefined,
+            },
+          }
+        })
       }
       return []
     })

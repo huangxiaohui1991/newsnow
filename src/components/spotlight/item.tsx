@@ -32,9 +32,9 @@ export function SpotlightItem({ topic }: SpotlightItemProps) {
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-2 ml-3.5">
-            {topic.platforms.map(p => (
+            {topic.platforms.map((p, i) => (
               <PlatformTag
-                key={p.sourceId}
+                key={`${p.sourceId}-${i}`}
                 id={p.sourceId}
                 name={p.sourceName}
                 rank={p.rank}

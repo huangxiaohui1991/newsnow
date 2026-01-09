@@ -9,7 +9,7 @@ export function ZenModeOverlay() {
   return (
     <AnimatePresence>
       {zenModeId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
+        <div key="zen-mode-overlay" className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

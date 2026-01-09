@@ -131,8 +131,23 @@ const ALLOWED_DOMAINS = [
 // Domains that are known to be Single Page Applications (SPAs)
 // These are in ALLOWED_DOMAINS but will likely fail content extraction
 const SPA_DOMAINS = [
+  // 财经类
   "wallstreetcn.com",
   "xueqiu.com",
+  "jin10.com",
+  "gelonghui.com",
+  // 科技资讯
+  "36kr.com",
+  "juejin.cn",
+  // 社交/热搜类
+  "zhihu.com",
+  "weibo.com",
+  "toutiao.com",
+  // 视频类
+  "bilibili.com",
+  "douyin.com",
+  "kuaishou.com",
+  "iqiyi.com",
 ]
 
 // Check if hostname is a private IP or localhost
@@ -229,37 +244,42 @@ export default defineEventHandler(async (event) => {
     const arrayBuffer = await response.arrayBuffer()
     const uint8Array = new Uint8Array(arrayBuffer)
 
-    // 4. Charset detection
+    // 4. Charset detection - 先从 Content-Type 获取
     let charset = "utf-8"
     const charsetMatch = contentType.match(/charset=([\w-]+)/i)
     if (charsetMatch) {
       charset = charsetMatch[1].toLowerCase()
     }
 
-    // 5. Decode content using TextDecoder (standard Web API)
+    // 5. 如果 Content-Type 没有指定 charset，先用 ASCII 兼容方式预读取 HTML 检测 meta 标签
+    if (!charsetMatch) {
+      // 用 latin1 预读取（不会损坏任何字节）
+      const previewDecoder = new TextDecoder("latin1")
+      const preview = previewDecoder.decode(uint8Array.slice(0, 2048)) // 只读前 2KB
+
+      // 检测 <meta charset="xxx"> 或 <meta http-equiv="Content-Type" content="text/html; charset=xxx">
+      const metaCharsetMatch = preview.match(/<meta[^>]+charset=["']?([\w-]+)/i)
+        || preview.match(/content=["'][^"']*charset=([\w-]+)/i)
+
+      if (metaCharsetMatch) {
+        charset = metaCharsetMatch[1].toLowerCase()
+        // 标准化常见的编码名称
+        if (charset === "gb2312" || charset === "gb_2312" || charset === "gbk") {
+          charset = "gbk"
+        }
+      }
+    }
+
+    // 6. Decode content using TextDecoder
     let html = ""
     try {
-      // Try to decode with detected charset
-      const decoder = new TextDecoder(charset, { fatal: true })
+      const decoder = new TextDecoder(charset, { fatal: false })
       html = decoder.decode(uint8Array)
     } catch {
-      try {
-        // Fallback to UTF-8
-        const utf8Decoder = new TextDecoder("utf-8")
-        html = utf8Decoder.decode(uint8Array)
-
-        // Check if HTML meta tag specifies different encoding
-        const metaMatch = html.match(/<meta[^>]+charset=["']?([\w-]+)/i)
-        if (metaMatch && metaMatch[1].toLowerCase() !== "utf-8") {
-          console.warn(`[ZenReader] Detected charset ${metaMatch[1]} but decoded as UTF-8`)
-        }
-      } catch (fallbackError) {
-        console.warn(`[ZenReader] Failed to decode content:`, fallbackError)
-        throw createError({
-          statusCode: 500,
-          statusMessage: "Failed to decode page content",
-        })
-      }
+      // 如果指定的编码不支持，回退到 UTF-8
+      console.warn(`[ZenReader] Charset ${charset} not supported, falling back to UTF-8`)
+      const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
+      html = utf8Decoder.decode(uint8Array)
     }
 
     // 6. Parse DOM

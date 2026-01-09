@@ -12,17 +12,60 @@ import { myFetch } from "~/utils"
 /* eslint-disable style/multiline-ternary */
 /* eslint-disable react-dom/no-unsafe-iframe-sandbox */
 
-// SPA 站点列表 - 这些站点需要 JS 渲染，无法提取正文
+// SPA 站点列表 - 这些站点需要 JS 渲染，无法提取正文，但允许 iframe
 const SPA_DOMAINS = [
+  // 财经类
   "wallstreetcn.com",
   "xueqiu.com",
   "jin10.com",
+  "gelonghui.com",
+  // 科技资讯
+  "36kr.com",
+  "juejin.cn",
+  // 视频类 (允许 iframe 的)
+  "bilibili.com",
+  "kuaishou.com",
+  // 社交
+  "zhihu.com", // 知乎实际允许 iframe
+]
+
+// 禁止 iframe 嵌入的站点 - 设置了 X-Frame-Options 或 CSP frame-ancestors
+const NO_IFRAME_DOMAINS = [
+  // 社交/论坛
+  "weibo.com",
+  "v2ex.com",
+  "coolapk.com",
+  // 代码托管
+  "github.com",
+  // 视频平台
+  "douyin.com",
+  "v.qq.com",
+  "iqiyi.com",
+  // 资讯
+  "toutiao.com",
+  "douban.com",
+  "zaobao.com",
+  // 游戏
+  "steampowered.com",
+  // 产品
+  "producthunt.com",
 ]
 
 function isSPADomain(url: string): boolean {
   try {
     const hostname = new URL(url).hostname
     return SPA_DOMAINS.some(domain =>
+      hostname === domain || hostname.endsWith(`.${domain}`),
+    )
+  } catch {
+    return false
+  }
+}
+
+function isNoIframeDomain(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname
+    return NO_IFRAME_DOMAINS.some(domain =>
       hostname === domain || hostname.endsWith(`.${domain}`),
     )
   } catch {
@@ -37,8 +80,17 @@ export function ReadingOverlay() {
   const sourceId = readingData?.sourceId
   const color = sourceId ? sources[sourceId]?.color : null
 
-  // 检测是否为 SPA 站点
+  // 检测站点类型
   const isSPA = useMemo(() => url ? isSPADomain(url) : false, [url])
+  const isNoIframe = useMemo(() => url ? isNoIframeDomain(url) : false, [url])
+
+  // 禁止 iframe 的站点直接在新标签页打开
+  useEffect(() => {
+    if (url && isNoIframe) {
+      window.open(url, "_blank")
+      setReadingUrl(null)
+    }
+  }, [url, isNoIframe, setReadingUrl])
 
   const { data: article, isLoading, isError } = useQuery({
     queryKey: ["article", url],
@@ -53,18 +105,18 @@ export function ReadingOverlay() {
         excerpt?: string
       }
     },
-    // SPA 站点不尝试提取，直接用 iframe
-    enabled: !!url && mode === "zen" && !isSPA,
+    // SPA 站点或禁止 iframe 的站点不尝试提取
+    enabled: !!url && mode === "zen" && !isSPA && !isNoIframe,
     staleTime: 1000 * 60 * 60, // 1 hour
   })
 
   // Reset mode when URL changes
   useEffect(() => {
-    if (url) {
+    if (url && !isNoIframe) {
       // SPA 站点默认使用 iframe 模式
       setMode(isSPA ? "iframe" : "zen")
     }
-  }, [url, isSPA])
+  }, [url, isSPA, isNoIframe])
 
   return (
     <AnimatePresence>

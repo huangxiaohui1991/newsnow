@@ -83,7 +83,7 @@ export function SpotlightBanner({ className }: SpotlightBannerProps) {
                   <AnimatePresence mode="popLayout">
                     {data?.topics.map((topic, idx) => (
                       <motion.div
-                        key={topic.id}
+                        key={`${topic.id}-${idx}`}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.03 }}

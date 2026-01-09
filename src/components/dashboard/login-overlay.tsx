@@ -17,7 +17,7 @@ export function LoginOverlay() {
   return (
     <AnimatePresence>
       {visible && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+        <div key="login-overlay" className="fixed inset-0 z-[200] flex items-center justify-center p-6">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

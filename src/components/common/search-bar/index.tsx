@@ -90,10 +90,10 @@ export function SearchBar() {
           <Command.List>
             <Command.Empty> 没有找到，可以前往 Github 提 issue </Command.Empty>
             {
-              sourceItems.map(({ column, sources }) => (
-                <Command.Group heading={column} key={column}>
+              sourceItems.map(({ column, sources }, groupIdx) => (
+                <Command.Group heading={column} key={`${column}-${groupIdx}`}>
                   {
-                    sources.map(item => <SourceItem item={item} key={item.id} />)
+                    sources.map((item, i) => <SourceItem item={item} key={`${item.id}-${i}`} />)
                   }
                 </Command.Group>
               ),

@@ -72,7 +72,7 @@ export function Dnd() {
         >
           {items.map((id, _index) => (
             <motion.li
-              key={id}
+              key={`${id}-${_index}`}
               className={cn(
                 isMobile && "w-full",
                 !isMobile && isHottest && "break-inside-avoid",

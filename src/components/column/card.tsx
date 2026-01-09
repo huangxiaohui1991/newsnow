@@ -56,7 +56,7 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging
       />
 
       {/* Frosted Black Inner Content */}
-      <div className="relative h-full w-full bg-[#0a0a0b]/90 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(2.2rem-1px)] p-5 flex flex-col overflow-hidden">
+      <div className="relative h-full w-full bg-[#0a0a0b]/90 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(2.2rem-1px)] p-3 md:p-5 flex flex-col overflow-hidden">
         {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
       </div>
     </motion.div>
@@ -251,11 +251,11 @@ function NewsListHot({ items, sourceId }: { items: NewsItem[], sourceId: SourceI
             }}
             href={url}
             target="_blank"
-            key={item.id}
+            key={`${item.id}-${i}`}
             title={item.extra?.hover}
             onClick={e => handleOpen(e, url)}
             className={cn(
-              "group flex items-center gap-3 p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
+              "group flex items-center gap-2 md:gap-3 p-1.5 md:p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
               "hover:bg-white/40 dark:hover:bg-white/5 hover:shadow-sm",
               "cursor-pointer visited:(text-neutral-400)",
             )}
@@ -278,7 +278,7 @@ function NewsListHot({ items, sourceId }: { items: NewsItem[], sourceId: SourceI
             {/* Title & Info Container */}
             <div className="flex-1 min-w-0 flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-[14.5px] font-bold tracking-tight text-neutral-800 dark:text-neutral-200 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <span className="text-[13px] md:text-[14.5px] font-bold tracking-tight text-neutral-800 dark:text-neutral-200 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {item.title}
                 </span>
 
@@ -342,18 +342,18 @@ function NewsListTimeLine({ items, sourceId }: { items: NewsItem[], sourceId: So
 
   return (
     <motion.ol
-      className="relative space-y-4 ml-2 border-s-2 border-dashed border-neutral-500/10 dark:border-white/5 pl-6"
+      className="relative space-y-3 md:space-y-4 ml-2 border-s-2 border-dashed border-neutral-500/10 dark:border-white/5 pl-4 md:pl-6"
       initial="hidden"
       animate="visible"
       variants={{
         visible: { transition: { staggerChildren: 0.05 } },
       }}
     >
-      {items?.map((item) => {
+      {items?.map((item, i) => {
         const url = width < 768 ? item.mobileUrl || item.url : item.url
         return (
           <motion.li
-            key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`}
+            key={`${item.id}-${i}`}
             className="group relative"
             variants={{
               hidden: { opacity: 0, x: -10 },
@@ -361,7 +361,7 @@ function NewsListTimeLine({ items, sourceId }: { items: NewsItem[], sourceId: So
             }}
           >
             {/* Timeline Dot */}
-            <div className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-neutral-900 bg-neutral-300 dark:bg-neutral-700 group-hover:bg-primary-500 group-hover:scale-125 transition-all shadow-sm" />
+            <div className="absolute -left-[21px] md:-left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-neutral-900 bg-neutral-300 dark:bg-neutral-700 group-hover:bg-primary-500 group-hover:scale-125 transition-all shadow-sm" />
 
             <div className="flex flex-col gap-1">
               {/* Time & Meta Tag */}
@@ -377,7 +377,7 @@ function NewsListTimeLine({ items, sourceId }: { items: NewsItem[], sourceId: So
               {/* Title */}
               <a
                 className={cn(
-                  "text-[14px] font-medium leading-relaxed text-neutral-700 dark:text-neutral-300",
+                  "text-[13px] md:text-[14px] font-medium leading-relaxed text-neutral-700 dark:text-neutral-300",
                   "hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer block",
                   "visited:(text-neutral-400/80)",
                 )}

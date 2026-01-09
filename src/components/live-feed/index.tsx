@@ -99,7 +99,7 @@ export function LiveFeed({ className, defaultCategory = "all" }: LiveFeedProps) 
                       <AnimatePresence mode="popLayout">
                         {allItems.map((item: LiveFeedItem, idx: number) => (
                           <motion.div
-                            key={item.id}
+                            key={`${item.id}-${idx}`}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{
