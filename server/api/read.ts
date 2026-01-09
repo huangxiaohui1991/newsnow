@@ -2,8 +2,10 @@ import { Readability } from "@mozilla/readability"
 import { parseHTML } from "linkedom"
 
 // Allowed domains for SSRF protection
+// All domains in this list are allowed for fetching
+// Note: Sites marked with [SPA] require JavaScript rendering and may fail content extraction
 const ALLOWED_DOMAINS = [
-  // Chinese news sites
+  // ========== Chinese News Sites ==========
   "weibo.com",
   "weibo.cn",
   "news.qq.com",
@@ -27,7 +29,7 @@ const ALLOWED_DOMAINS = [
   "gov.cn",
   "news.cn",
 
-  // Additional Chinese sites
+  // ========== Additional Chinese Sites ==========
   "sputniknews.cn",
   "zaochenbao.com",
   "juejin.cn",
@@ -40,37 +42,97 @@ const ALLOWED_DOMAINS = [
   "douban.com",
   "cankaoxiaoxi.com",
 
-  // Tech & Development
+  // ========== Tech & Development ==========
   "github.com",
   "v2ex.com",
   "linux.do",
   "freebuf.com",
   "hackernews.com",
 
-  // Entertainment
+  // ========== Entertainment ==========
   "douyin.com",
   "kuaishou.com",
   "iqiyi.com",
   "bilibili.com",
   "steampowered.com",
 
-  // Finance
-  "wallstreetcn.com",
-  "xueqiu.com",
+  // ========== Finance (Note: Many are SPAs) ==========
+  "wallstreetcn.com", // [SPA] Requires JS for content
+  "xueqiu.com", // [SPA] Requires JS for content
   "jin10.com",
   "mktnews.net",
 
-  // Shopping
+  // ========== Shopping ==========
   "producthunt.com",
   "smzdm.com",
 
-  // Others
+  // ========== Others ==========
   "tieba.baidu.com",
   "baidu.com",
   "nowcoder.com",
   "hupu.com",
   "kaopustorage.blob.core.windows.net",
   "chongbuluo.com",
+
+  // ========== Subdomains ==========
+  "s.weibo.com",
+  "s.search.bilibili.com",
+  "api.bilibili.com",
+  "search.bilibili.com",
+  "www.bilibili.com",
+  "i.news.qq.com",
+  "cache.thepaper.cn",
+  "stock.xueqiu.com",
+  "www.zhihu.com",
+  "www.toutiao.com",
+  "tieba.baidu.com",
+  "top.baidu.com",
+  "login.douyin.com",
+  "www.douyin.com",
+  "bbs.hupu.com",
+  "www.nowcoder.com",
+  "gw-c.nowcoder.com",
+  "www.kuaishou.com",
+  "www.jin10.com",
+  "flash.jin10.com",
+  "api-one.wallstcn.com",
+  "api.mktnews.net",
+  "www.producthunt.com",
+  "post.smzdm.com",
+  "www.solidot.org",
+  "www.fastbull.com",
+  "www.gelonghui.com",
+  "www.ghxi.com",
+  "m.douban.com",
+  "movie.douban.com",
+  "china.cankaoxiaoxi.com",
+  "www.chongbuluo.com",
+  "store.steampowered.com",
+  "www.freebuf.com",
+  "news.ycombinator.com",
+  "www.v2ex.com",
+  "linux.do",
+  "api.juejin.cn",
+  "sspai.com",
+  "www.sspai.com",
+  "www.steampowered.com",
+  "www.qq.com",
+  "www.ifeng.com",
+  "bbs.pcbeta.com",
+  "pbaccess.video.qq.com",
+  "v.qq.com",
+  "mesh.if.iqiyi.com",
+  "www.iqiyi.com",
+  "www.ithome.com",
+  "www.36kr.com",
+  "www.zaochenbao.com",
+]
+
+// Domains that are known to be Single Page Applications (SPAs)
+// These are in ALLOWED_DOMAINS but will likely fail content extraction
+const SPA_DOMAINS = [
+  "wallstreetcn.com",
+  "xueqiu.com",
 ]
 
 // Check if hostname is a private IP or localhost
@@ -136,6 +198,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // Check if URL is from a known SPA domain
+    const urlObj = new URL(url)
+    const isSPA = SPA_DOMAINS.some(domain =>
+      urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`),
+    )
+
+    if (isSPA) {
+      console.warn(`[ZenReader] ${urlObj.hostname} is a known SPA - content extraction may fail`)
+    }
+
     // 1. Fetch the page using standard fetch API (compatible with Cloudflare Workers)
     const response = await fetch(url, {
       headers: {
@@ -216,8 +288,17 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     console.error(`[ZenReader] Failed to read ${url}:`, error)
 
+    // Check if this is a SPA-related error
+    const urlObj = new URL(url)
+    const isSPA = SPA_DOMAINS.some(domain =>
+      urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`),
+    )
+
     // Provide more detailed error information for debugging
     const errorMessage = error.message || String(error)
+    const hint = isSPA
+      ? "This site is a Single Page Application (SPA) that requires JavaScript to render content. Server-side extraction cannot work with SPAs."
+      : "This page might have anti-scraping protection or use a complex HTML structure that Readability cannot parse."
 
     throw createError({
       statusCode: 500,
@@ -225,7 +306,8 @@ export default defineEventHandler(async (event) => {
       data: {
         url,
         error: errorMessage,
-        hint: "This page might have anti-scraping protection or use a complex HTML structure that Readability cannot parse.",
+        hint,
+        isSPA,
       },
     })
   }
