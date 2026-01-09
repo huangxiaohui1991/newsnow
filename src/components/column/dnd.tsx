@@ -9,16 +9,17 @@ import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { motion } from "framer-motion"
 import { useWindowSize } from "react-use"
 import { isMobile } from "react-device-detect"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { DndContext } from "../common/dnd"
 import { useSortable } from "../common/dnd/useSortable"
-import { OverlayScrollbar } from "../common/overlay-scrollbar"
 import type { ItemsProps } from "./card"
 import { CardWrapper } from "./card"
-import { currentSourcesAtom } from "~/atoms"
+import { currentColumnIDAtom, currentSourcesAtom, zenModeIdAtom } from "~/atoms"
 
 const AnimationDuration = 200
 const WIDTH = 350
 export function Dnd() {
+  const currentId = useAtomValue(currentColumnIDAtom)
   const [items, setItems] = useAtom(currentSourcesAtom)
   const [parent] = useAutoAnimate({ duration: AnimationDuration })
   useEntireQuery(items)
@@ -28,29 +29,38 @@ export function Dnd() {
     return Math.min(width - 32, WIDTH)
   }, [width])
 
+  const isHottest = currentId === "hottest"
+  const isRealtime = currentId === "realtime"
+
   if (!items.length) return null
 
+  const isVerticalLayout = isRealtime || isMobile
+
   return (
-    <DndWrapper items={items} setItems={setItems} isSingleColumn={isMobile}>
-      <OverlayScrollbar defer className="overflow-x-auto">
+    <DndWrapper items={items} setItems={setItems} axis={isVerticalLayout ? "vertical" : "grid"}>
+      <div className="flex flex-col gap-8 px-4 sm:px-0">
         <motion.ol
-          className={isMobile
-            ? "flex px-2 gap-6 pb-4 scroll-smooth"
-            : "grid w-full gap-6"}
+          className={cn(
+            "pb-20",
+            // Mobile: Always full width vertical list to avoid squeezing
+            isMobile && "flex flex-col gap-6 w-full",
+            // Desktop Hottest: Relaxed 2-column waterfall
+            !isMobile && isHottest && "columns-1 md:columns-2 gap-8 space-y-8 max-w-6xl mx-auto w-full",
+            // Desktop Realtime: Focused single column
+            !isMobile && isRealtime && "flex flex-col gap-8 max-w-3xl mx-auto w-full",
+            // Desktop Others: Standard Grid
+            !isMobile && !isHottest && !isRealtime && "grid gap-6",
+          )}
           ref={parent}
-          style={isMobile
+          style={!isMobile && !isHottest && !isRealtime
             ? {
-                // 横向滚动布局
-              }
-            : {
                 gridTemplateColumns: `repeat(auto-fill, minmax(${minWidth}px, 1fr))`,
-              }}
+              }
+            : undefined}
           initial="hidden"
           animate="visible"
           variants={{
-            hidden: {
-              opacity: 0,
-            },
+            hidden: { opacity: 0 },
             visible: {
               opacity: 1,
               transition: {
@@ -60,33 +70,31 @@ export function Dnd() {
             },
           }}
         >
-          {items.map((id, index) => (
+          {items.map((id, _index) => (
             <motion.li
               key={id}
-              className={$(isMobile && "flex-shrink-0", isMobile && index === items.length - 1 && "mr-2")}
-              style={isMobile ? { width: `${width - 16 > WIDTH ? WIDTH : width - 16}px` } : undefined}
+              className={cn(
+                isMobile && "w-full",
+                !isMobile && isHottest && "break-inside-avoid",
+              )}
+              style={isMobile ? { width: "100%" } : undefined}
               transition={{
                 type: "tween",
                 duration: AnimationDuration / 1000,
               }}
               variants={{
-                hidden: {
-                  y: 20,
-                  opacity: 0,
-                },
-                visible: {
-                  y: 0,
-                  opacity: 1,
-                },
+                hidden: { y: 20, opacity: 0 },
+                visible: { y: 0, opacity: 1 },
               }}
             >
               <SortableCardWrapper id={id} />
             </motion.li>
           ))}
         </motion.ol>
-      </OverlayScrollbar>
-      {isMobile && (
-        <div className="flex justify-center">
+      </div>
+
+      {isMobile && !isVerticalLayout && !isHottest && !isRealtime && (
+        <div className="flex justify-center mt-[-40px]">
           <span className="text-sm text-gray-500 text-center">左右滑动查看更多</span>
         </div>
       )}
@@ -94,10 +102,10 @@ export function Dnd() {
   )
 }
 
-function DndWrapper({ items, setItems, isSingleColumn, children }: PropsWithChildren<{
+function DndWrapper({ items, setItems, axis, children }: PropsWithChildren<{
   items: SourceID[]
   setItems: (items: SourceID[]) => void
-  isSingleColumn: boolean
+  axis: "vertical" | "horizontal" | "grid"
 }>) {
   const onDropTargetChange = useCallback(({ location, source }: BaseEventPayload<ElementDragType>) => {
     const traget = location.current.dropTargets[0]
@@ -111,10 +119,10 @@ function DndWrapper({ items, setItems, isSingleColumn, children }: PropsWithChil
       startIndex: fromIndex,
       indexOfTarget: toIndex,
       closestEdgeOfTarget,
-      axis: isSingleColumn ? "horizontal" : "vertical",
+      axis: axis === "grid" ? "vertical" : axis, // Practical fallback
     })
     setItems(update)
-  }, [items, setItems, isSingleColumn])
+  }, [items, setItems, axis])
   // 避免动画干扰
   const { run } = useThrottleFn(onDropTargetChange, {
     leading: true,
@@ -173,6 +181,7 @@ function SortableCardWrapper({ id }: ItemsProps) {
     setHandleRef,
     OverlayContainer,
   } = useSortable({ id })
+  const setZenModeId = useSetAtom(zenModeIdAtom)
 
   useEffect(() => {
     if (OverlayContainer) {
@@ -182,12 +191,16 @@ function SortableCardWrapper({ id }: ItemsProps) {
 
   return (
     <>
-      <CardWrapper
-        ref={setNodeRef}
-        id={id}
-        isDragging={isDragging}
-        setHandleRef={setHandleRef}
-      />
+      <div onClick={() => setZenModeId(id)} className="cursor-pointer">
+        <CardWrapper
+          ref={setNodeRef}
+          id={id}
+          isDragging={isDragging}
+          setHandleRef={setHandleRef}
+          layoutId={`card-${id}`}
+          className="pointer-events-none" // Disable interaction inside card to allow container click
+        />
+      </div>
       {OverlayContainer && createPortal(<CardOverlay id={id} />, OverlayContainer)}
     </>
   )
