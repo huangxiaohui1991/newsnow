@@ -37,3 +37,9 @@ export const goToTopAtom = atom({
   el: undefined as HTMLElement | undefined,
   fn: undefined as (() => void) | undefined,
 })
+
+export const zenModeIdAtom = atom<SourceID | null>(null)
+
+export const readingUrlAtom = atom<{ url: string, sourceId?: SourceID } | null>(null)
+
+export const loginVisibleAtom = atom(false)

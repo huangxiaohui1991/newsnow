@@ -1,18 +1,24 @@
 import type { NewsItem, SourceID, SourceResponse } from "@shared/types"
 import { useQuery } from "@tanstack/react-query"
-import { AnimatePresence, motion, useInView } from "framer-motion"
+import type { HTMLMotionProps } from "framer-motion"
+import { motion, useInView } from "framer-motion"
 import { useWindowSize } from "react-use"
 import { forwardRef, useImperativeHandle } from "react"
+import { useSetAtom } from "jotai"
 import { OverlayScrollbar } from "../common/overlay-scrollbar"
 import { safeParseString } from "~/utils"
 
-export interface ItemsProps extends React.HTMLAttributes<HTMLDivElement> {
+import { cn } from "~/utils/cn"
+import { readingUrlAtom } from "~/atoms"
+
+export interface ItemsProps extends HTMLMotionProps<"div"> {
   id: SourceID
   /**
    * 是否显示透明度，拖动时原卡片的样式
    */
   isDragging?: boolean
   setHandleRef?: (ref: HTMLElement | null) => void
+  layoutId?: string
 }
 
 interface NewsCardProps {
@@ -20,24 +26,21 @@ interface NewsCardProps {
   setHandleRef?: (ref: HTMLElement | null) => void
 }
 
-export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging, setHandleRef, style, ...props }, dndRef) => {
+export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging, setHandleRef, style, className, layoutId, ...props }, dndRef) => {
   const ref = useRef<HTMLDivElement>(null)
-
-  const inView = useInView(ref, {
-    once: true,
-  })
+  const inView = useInView(ref, { once: true })
+  const color = sources[id].color
 
   useImperativeHandle(dndRef, () => ref.current! as HTMLDivElement)
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      className={$(
-        "flex flex-col h-500px rounded-2xl p-4 cursor-default",
-        // "backdrop-blur-5",
-        "transition-opacity-300",
-        isDragging && "op-50",
-        `bg-${sources[id].color}-500 dark:bg-${sources[id].color} bg-op-40!`,
+      layoutId={layoutId}
+      className={cn(
+        "relative p-[1px] h-500px rounded-[2rem] overflow-hidden group/card transition-all duration-500",
+        isDragging && "opacity-50 scale-95",
+        className,
       )}
       style={{
         transformOrigin: "50% 50%",
@@ -45,8 +48,18 @@ export const CardWrapper = forwardRef<HTMLElement, ItemsProps>(({ id, isDragging
       }}
       {...props}
     >
-      {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
-    </div>
+      {/* Cyber Light Strip Border */}
+      <div className={cn(
+        "absolute inset-0 opacity-30 group-hover/card:opacity-100 transition-opacity duration-700",
+        `bg-gradient-to-br from-${color}-500 via-${color}-400 to-transparent`,
+      )}
+      />
+
+      {/* Frosted Black Inner Content */}
+      <div className="relative h-full w-full bg-[#0a0a0b]/90 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(2.2rem-1px)] p-5 flex flex-col overflow-hidden">
+        {inView && <NewsCard id={id} setHandleRef={setHandleRef} />}
+      </div>
+    </motion.div>
   )
 })
 
@@ -163,7 +176,7 @@ function NewsCard({ id, setHandleRef }: NewsCardProps) {
         defer
       >
         <div className={$("transition-opacity-500", isFetching && "op-20")}>
-          {!!data?.items?.length && (sources[id].type === "hottest" ? <NewsListHot items={data.items} /> : <NewsListTimeLine items={data.items} />)}
+          {!!data?.items?.length && (sources[id].type === "hottest" ? <NewsListHot items={data.items} sourceId={id} /> : <NewsListTimeLine items={data.items} sourceId={id} />)}
         </div>
       </OverlayScrollbar>
     </>
@@ -177,117 +190,208 @@ function UpdatedTime({ isError, updatedTime }: { updatedTime: any, isError: bool
   return "加载中..."
 }
 
-function DiffNumber({ diff }: { diff: number }) {
-  const [shown, setShown] = useState(true)
-  useEffect(() => {
-    setShown(true)
-    const timer = setTimeout(() => {
-      setShown(false)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [setShown, diff])
-
-  return (
-    <AnimatePresence>
-      { shown && (
-        <motion.span
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 0.5, y: -7 }}
-          exit={{ opacity: 0, y: -15 }}
-          className={$("absolute left-0 text-xs", diff < 0 ? "text-green" : "text-red")}
-        >
-          {diff > 0 ? `+${diff}` : diff}
-        </motion.span>
-      )}
-    </AnimatePresence>
-  )
-}
 function ExtraInfo({ item }: { item: NewsItem }) {
   if (item?.extra?.info) {
-    return <>{item.extra.info}</>
+    const isHeat = /[\d.]+/.test(item.extra.info)
+    return (
+      <div className="flex items-center gap-1 opacity-70">
+        {isHeat && <span className="i-ph:flame-duotone text-orange-500" />}
+        <span>{item.extra.info}</span>
+      </div>
+    )
   }
   if (item?.extra?.icon) {
     const { url, scale } = typeof item.extra.icon === "string" ? { url: item.extra.icon, scale: undefined } : item.extra.icon
     return (
-      <img
-        src={url}
-        style={{
-          transform: `scale(${scale ?? 1})`,
-        }}
-        className="h-4 inline mt--1"
-        referrerPolicy="no-referrer"
-        onError={e => e.currentTarget.style.display = "none"}
-      />
+      <div className="flex items-center group-hover:scale-110 transition-transform">
+        <img
+          src={url}
+          style={{
+            transform: `scale(${scale ?? 1})`,
+          }}
+          className="h-3.5 w-auto rounded-sm ring-1 ring-white/20 shadow-sm"
+          referrerPolicy="no-referrer"
+          onError={e => e.currentTarget.parentElement!.style.display = "none"}
+        />
+      </div>
     )
   }
+  return null
 }
 
 function NewsUpdatedTime({ date }: { date: string | number }) {
   const relativeTime = useRelativeTime(date)
   return <>{relativeTime}</>
 }
-function NewsListHot({ items }: { items: NewsItem[] }) {
+function NewsListHot({ items, sourceId }: { items: NewsItem[], sourceId: SourceID }) {
   const { width } = useWindowSize()
+  const setReadingUrl = useSetAtom(readingUrlAtom)
+
+  const handleOpen = (e: React.MouseEvent, url: string) => {
+    e.preventDefault()
+    setReadingUrl({ url, sourceId })
+  }
+
   return (
-    <ol className="flex flex-col gap-2">
-      {items?.map((item, i) => (
-        <a
-          href={width < 768 ? item.mobileUrl || item.url : item.url}
-          target="_blank"
-          key={item.id}
-          title={item.extra?.hover}
-          className={$(
-            "flex gap-2 items-center items-stretch relative cursor-pointer [&_*]:cursor-pointer transition-all",
-            "hover:bg-neutral-400/10 rounded-md pr-1 visited:(text-neutral-400)",
-          )}
-        >
-          <span className={$("bg-neutral-400/10 min-w-6 flex justify-center items-center rounded-md text-sm")}>
-            {i + 1}
-          </span>
-          {!!item.extra?.diff && <DiffNumber diff={item.extra.diff} />}
-          <span className="self-start line-height-none">
-            <span className="mr-2 text-base">
-              {item.title}
-            </span>
-            <span className="text-xs text-neutral-400/80 truncate align-middle">
-              <ExtraInfo item={item} />
-            </span>
-          </span>
-        </a>
-      ))}
-    </ol>
+    <motion.ol
+      className="flex flex-col gap-1.5"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.04 } },
+      }}
+    >
+      {items?.map((item, i) => {
+        const url = width < 768 ? item.mobileUrl || item.url : item.url
+        return (
+          <motion.a
+            variants={{
+              hidden: { opacity: 0, x: -8 },
+              visible: { opacity: 1, x: 0 },
+            }}
+            href={url}
+            target="_blank"
+            key={item.id}
+            title={item.extra?.hover}
+            onClick={e => handleOpen(e, url)}
+            className={cn(
+              "group flex items-center gap-3 p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
+              "hover:bg-white/40 dark:hover:bg-white/5 hover:shadow-sm",
+              "cursor-pointer visited:(text-neutral-400)",
+            )}
+          >
+            {/* Index / Rank Badge */}
+            <div className={cn(
+              "w-7 h-7 shrink-0 flex items-center justify-center rounded-lg font-black text-xs transition-transform group-hover:scale-110",
+              i === 0
+                ? "bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950 shadow-sm"
+                : i === 1
+                  ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-900 shadow-sm"
+                  : i === 2
+                    ? "bg-gradient-to-br from-orange-300 to-orange-500 text-orange-950 shadow-sm"
+                    : "bg-neutral-500/10 text-neutral-500 dark:text-neutral-400",
+            )}
+            >
+              {i + 1}
+            </div>
+
+            {/* Title & Info Container */}
+            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[14.5px] font-bold tracking-tight text-neutral-800 dark:text-neutral-200 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {item.title}
+                </span>
+
+                {/* Trend Indicators */}
+                {item.extra?.diff !== undefined && (
+                  <TrendIndicator diff={item.extra.diff} />
+                )}
+
+                {/* Hot / Special Tags */}
+                {i === 0 && (
+                  <span className="shrink-0 text-[9px] bg-red-500 text-white px-1 py-0.5 rounded font-black italic animate-pulse">HOT</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400/80">
+                <ExtraInfo item={item} />
+              </div>
+            </div>
+
+            {/* Interaction Indicator */}
+            <div className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+              <span className="i-ph:arrow-right-bold text-xs text-primary-500" />
+            </div>
+          </motion.a>
+        )
+      })}
+    </motion.ol>
   )
 }
 
-function NewsListTimeLine({ items }: { items: NewsItem[] }) {
-  const { width } = useWindowSize()
+function TrendIndicator({ diff }: { diff: number }) {
+  if (diff === 0) return null
+
+  const isUp = diff > 0
   return (
-    <ol className="border-s border-neutral-400/50 flex flex-col ml-1">
-      {items?.map(item => (
-        <li key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`} className="flex flex-col">
-          <span className="flex items-center gap-1 text-neutral-400/50 ml--1px">
-            <span className="">-</span>
-            <span className="text-xs text-neutral-400/80">
-              {(item.pubDate || item?.extra?.date) && <NewsUpdatedTime date={(item.pubDate || item?.extra?.date)!} />}
-            </span>
-            <span className="text-xs text-neutral-400/80">
-              <ExtraInfo item={item} />
-            </span>
-          </span>
-          <a
-            className={$(
-              "ml-2 px-1 hover:bg-neutral-400/10 rounded-md visited:(text-neutral-400/80)",
-              "cursor-pointer [&_*]:cursor-pointer transition-all",
-            )}
-            href={width < 768 ? item.mobileUrl || item.url : item.url}
-            title={item.extra?.hover}
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className={cn(
+      "flex items-center text-[10px] font-black italic shrink-0",
+      isUp ? "text-red-500" : "text-green-500",
+    )}
+    >
+      {isUp
+        ? (
+            <span className="i-ph:caret-double-up-fill" />
+          )
+        : (
+            <span className="i-ph:caret-double-down-fill" />
+          )}
+      <span className="ml-0.5">{Math.abs(diff)}</span>
+    </div>
+  )
+}
+
+function NewsListTimeLine({ items, sourceId }: { items: NewsItem[], sourceId: SourceID }) {
+  const { width } = useWindowSize()
+  const setReadingUrl = useSetAtom(readingUrlAtom)
+
+  const handleOpen = (e: React.MouseEvent, url: string) => {
+    e.preventDefault()
+    setReadingUrl({ url, sourceId })
+  }
+
+  return (
+    <motion.ol
+      className="relative space-y-4 ml-2 border-s-2 border-dashed border-neutral-500/10 dark:border-white/5 pl-6"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.05 } },
+      }}
+    >
+      {items?.map((item) => {
+        const url = width < 768 ? item.mobileUrl || item.url : item.url
+        return (
+          <motion.li
+            key={`${item.id}-${item.pubDate || item?.extra?.date || ""}`}
+            className="group relative"
+            variants={{
+              hidden: { opacity: 0, x: -10 },
+              visible: { opacity: 1, x: 0 },
+            }}
           >
-            {item.title}
-          </a>
-        </li>
-      ))}
-    </ol>
+            {/* Timeline Dot */}
+            <div className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-neutral-900 bg-neutral-300 dark:bg-neutral-700 group-hover:bg-primary-500 group-hover:scale-125 transition-all shadow-sm" />
+
+            <div className="flex flex-col gap-1">
+              {/* Time & Meta Tag */}
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-neutral-500/5 text-neutral-400 dark:text-neutral-500">
+                  {(item.pubDate || item?.extra?.date) && <NewsUpdatedTime date={(item.pubDate || item?.extra?.date)!} />}
+                </span>
+                <div className="text-[9px] font-bold">
+                  <ExtraInfo item={item} />
+                </div>
+              </div>
+
+              {/* Title */}
+              <a
+                className={cn(
+                  "text-[14px] font-medium leading-relaxed text-neutral-700 dark:text-neutral-300",
+                  "hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer block",
+                  "visited:(text-neutral-400/80)",
+                )}
+                href={url}
+                title={item.extra?.hover}
+                target="_blank"
+                onClick={e => handleOpen(e, url)}
+              >
+                {item.title}
+              </a>
+            </div>
+          </motion.li>
+        )
+      })}
+    </motion.ol>
   )
 }
