@@ -1,0 +1,38 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 75c1c6c310bdcc929ffa75b5664df962e865a13b..ab99f7df186304e41b8a7e6150dab6ce629c8d16 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -3,7 +3,22 @@ import { platform } from 'node:os';
+ import process from 'node:process';
+ import { fileURLToPath } from 'node:url';
+ import { createNitro, prepare, copyPublicAssets, prerender, build, createDevServer } from 'nitropack';
+-import { toNodeListener } from 'h3';
++// Helper to handle both h3 v1.x and h3-nightly v2.x APIs
++async function createNodeHandler(app) {
++  // Check if app has .fetch (h3-nightly v2.x)
++  if (typeof app.fetch === 'function') {
++    try {
++      const { toNodeHandler } = await import('h3-nightly/node');
++      return toNodeHandler(app);
++    } catch {
++      // fall through
++    }
++  }
++  // Use h3 v1.x toNodeListener - import directly from package path
++  const h3Path = '../../../../h3@1.15.4/node_modules/h3/dist/index.mjs';
++  const { toNodeListener } = await import(h3Path);
++  return toNodeListener(app);
++}
+ import { normalizePath } from 'vite';
+ import defu from 'defu';
+ import { createConsola } from 'consola';
+@@ -98,7 +113,8 @@ function nitro(nitroOptions) {
+       const nitro2 = await createNitro(devConfig);
+       const server = createDevServer(nitro2);
+       await build(nitro2);
+-      viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
++      const handler = await createNodeHandler(server.app);
++      viteServer.middlewares.use(apiPrefix, handler);
+       viteServer.httpServer?.once("listening", () => {
+         const { host, port } = viteServer.config.server;
+         process.env.NITRO_HOST = host ? String(host) : "localhost";
