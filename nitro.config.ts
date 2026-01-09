@@ -29,6 +29,9 @@ const nitroOption: Parameters<typeof viteNitro>[0] = {
   alias: {
     "@shared": join(projectDir, "shared"),
     "#": join(projectDir, "server"),
+    "canvas": "unenv/runtime/mock/proxy",
+    "node:canvas": "unenv/runtime/mock/proxy",
+    "node-canvas": "unenv/runtime/mock/proxy",
   },
 }
 
@@ -46,6 +49,9 @@ if (process.env.VERCEL) {
   nitroOption.unenv = {
     alias: {
       "safer-buffer": "node:buffer",
+      "canvas": "unenv/runtime/mock/proxy",
+      "node:canvas": "unenv/runtime/mock/proxy",
+      "node-canvas": "unenv/runtime/mock/proxy",
     },
   }
   nitroOption.database = {
