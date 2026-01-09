@@ -23,7 +23,7 @@ const ALLOWED_DOMAINS = [
   "toutiao.com",
   "sohu.com",
   "ifeng.com",
-  "163.com",
+  "wallstreetcn.com",
   "gov.cn",
   "news.cn",
 ]
