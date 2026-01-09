@@ -3,6 +3,7 @@ import { parseHTML } from "linkedom"
 
 // Allowed domains for SSRF protection
 const ALLOWED_DOMAINS = [
+  // Chinese news sites
   "weibo.com",
   "weibo.cn",
   "news.qq.com",
@@ -25,6 +26,51 @@ const ALLOWED_DOMAINS = [
   "ifeng.com",
   "gov.cn",
   "news.cn",
+
+  // Additional Chinese sites
+  "sputniknews.cn",
+  "zaochenbao.com",
+  "juejin.cn",
+  "sspai.com",
+  "smzdm.com",
+  "solidot.org",
+  "fastbull.com",
+  "gelonghui.com",
+  "ghxi.com",
+  "douban.com",
+  "cankaoxiaoxi.com",
+
+  // Tech & Development
+  "github.com",
+  "v2ex.com",
+  "linux.do",
+  "freebuf.com",
+  "hackernews.com",
+
+  // Entertainment
+  "douyin.com",
+  "kuaishou.com",
+  "iqiyi.com",
+  "bilibili.com",
+  "steampowered.com",
+
+  // Finance
+  "wallstreetcn.com",
+  "xueqiu.com",
+  "jin10.com",
+  "mktnews.net",
+
+  // Shopping
+  "producthunt.com",
+  "smzdm.com",
+
+  // Others
+  "tieba.baidu.com",
+  "baidu.com",
+  "nowcoder.com",
+  "hupu.com",
+  "kaopustorage.blob.core.windows.net",
+  "chongbuluo.com",
 ]
 
 // Check if hostname is a private IP or localhost
