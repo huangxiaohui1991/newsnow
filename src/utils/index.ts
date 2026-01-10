@@ -39,8 +39,9 @@ export class Timer {
 }
 
 // 在 Capacitor (Android/iOS) 环境下使用远程 API，否则使用相对路径
+// 注意：调用 myFetch 时已包含 /api 前缀，所以这里只需配置服务器根地址
 const isNative = Capacitor.isNativePlatform()
-const apiBaseURL = isNative ? "https://news.hxh.world/api" : "/api"
+const apiBaseURL = isNative ? "https://news.hxh.world" : ""
 
 export const myFetch = $fetch.create({
   timeout: 15000,
